@@ -16,6 +16,7 @@ diagonal_units = [
     [rows[i]+cols[i] for i in range(len(rows))],
     [rows[len(rows)-1-i]+cols[i] for i in range(len(rows))]
 ]
+# Diagonals are merely a new type of "row" or "column" (Constraint)
 unitlist = row_units + column_units + square_units + diagonal_units
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
@@ -42,17 +43,23 @@ def naked_twins(values):
     # Find all instances of naked twins
     for box in values.keys():
         val = values[box]
-        if len(val) != 2:
+        if len(val) != 2: # We are looking for a pair of possibilities
             continue
 
+        # Iterate over each unit
         for unit in units[box]:
+            # Try to find it's twin
             twin_pair = [b for b in unit if values[b] == val]
             if len(twin_pair) != 2:
                 continue
 
+            # Replace the possibilities in the peers of that unit
             for box in [b for b in unit if values[b] != val]:
                 if len(values[box]) == 1: # Skip if already solved
                     continue
+
+                # Use the str.translate() method to substitute possibility
+                # with an empty string
                 values[box] = values[box].translate(dict([(ord(i), '') for i in val]))
 
     return values
@@ -108,6 +115,9 @@ def only_choice(values):
                 values[dplaces[0]] = digit
     return values
 
+# A helper method that takes a generic reducer
+# and applies the reducer to a sudoku board until
+# no reduction can be performed.
 def solve_until_stall(values, reducer):
     solved_values = [box for box in values.keys() if len(values[box]) == 1]
     stalled = False
@@ -120,6 +130,9 @@ def solve_until_stall(values, reducer):
             return False
     return values
 
+# The main reducer for my sudoku solver
+# It uses elimination, only choice, and naked twins strategies
+# to attempt to solve the puzzle
 def reduce_puzzle(values):
     def reducer(values):
         values = eliminate(values)
